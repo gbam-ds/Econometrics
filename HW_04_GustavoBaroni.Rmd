@@ -1,0 +1,75 @@
+---
+title: "Causal Inference - Problem Set 4"
+author: "Gustavo Baroni"
+date: "9/29/2020"
+output:   
+  pdf_document:
+    latex_engine: xelatex
+---
+### Question 1 
+
+Consider the model $$Y_it = γ_t + \lambda_i + \beta_1D_it + \epsilon_it$$^[My $Y_it$ isn't in the way that I want: I tryed to put the "t" small next to the "i", but I couldn't neither by doing $Y_(it)$ nor $Y_[it]$. I would appreciate any help whith that for the next HWs!] where, $E[\epsilon_it|D_it, t] = 0$. $D_it$ is equal to 1 if the individual i in period t was treated and 0, otherwise. $\beta$ gauges the causal effect of treatment on $Y_it$.
+
+(a) Assuming that $E[\epsilon_itDit] = 0$. Show that $\beta$ is equal to the two differences in the mean of Y.
+
+  By difference-in-differences^[Angrist, Joshua D. and Jorn-Steffen Pischke. 2008. Mostly Harmless Econometrics: An Empiricist’s Companion. Mimeo. (Available *[HERE](https://mycourses.aalto.fi/pluginfile.php/203124/mod_resource/content/1/Angrist%20%20Pischke.pdf)*)], 
+$$
+[E[Y_it|D_it=1, t=B]-E[Y_it|D_it=1, t=A]] - [E[Y_it|D_it=0, t=B]-E[Y_it|D_it=0, t=A]] = \beta
+$$
+  Where $t=B$ and $t=A$ are different periods of time.
+
+(b) How does this result relates to the assumption necessary in a standard difference-in-difference model?
+  
+  This result is given by the difference-in-differences model, so it relates perfectly.
+
+(c) Consider the example: The outcome is the incidence with the dengue diseases. The treatment consists of volunteers who assist in the cleansing of potential foci of the disease transmitter. What types of unobserved variables do the difference-in-differences regression equation control? What types of unobserved variables do not control?
+
+  The difference-in-differences regression equation control 
+
+### Question 2 
+
+Using pset4.csv, restrict your sample to years 2002 and 2007. Consider the following
+model: $$larreacd_it = c_i + \beta_0 + \beta_1lpib_it + \beta_2lprop_serv_it + \beta_3lpop_it + \delta_0a2007_t + u_it$$
+```{r include=FALSE, message=FALSE, warning=FALSE}
+library(readr)
+library(tidyverse)
+pset4 <- read_csv2("~/Gustavo/Econometria/HW4/pset4.csv") ##read_csv was 
+                                                          ##not working due to ;
+pset4 <- pset4 %>% filter(pset4$ano %in% c("2002","2007")) ##its been a while that I                                                             didnt do stg like that
+```
+
+Where $i$ is the unit of cross section, $t$ is the period and a200 is 1 if $t = 2007$ and 0 if $t = 2002$.
+
+(a) Assume $c_i$ is non-stochastic and represents the fixed effect. What is the interpretation of $ci$? What is it different to $u_it$?
+
+(b) Estimate the Pooled OLS model?
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library("plm")
+model <- plm(pib ~ prop_serv + pop + educ + cod_reg + idade + area + larrecad + lpib + leduc + lpop + lprop_serv + a2002 + a2007 + uf_r, 
+             data = pset4,
+             model = "pooling")
+```
+
+(c) Estimate the first difference equation of this model. Describe the hypotheses needed for this estimator.
+
+  I got a list. I have worked with lists once or twice in my life, so I do not know how to proceed.
+
+(d) Estimate the fixed effect model. Describe the hypotheses needed for this estimator.
+
+
+(e) Compare the estimates on (c) and (d).
+
+(f) Compare the estimates on (b) and (c). Explain the pros e cons of each estimator.
+
+### Question 3 
+
+Using pset4.csv, restrict your sample to years 2002, 2004 and 2007. Consider the
+following model: $$larreacd_it = c_i + \beta_0 + \beta_1lpib_it + \beta_2lprop_serv_it + \beta_3lpop_it + \delta_0a2004_t + \delta_1a2007_t + u_it$$
+
+Where i is the unit of cross section, t is the period, a2007 is 1 if $t = 2007$ and 0 if otherwise and a2004 is 1 if $t = 2004$ and 0 otherwise.
+
+(a) Estimate the first difference equation of this model.
+
+(b) Estimate the fixed effect model.
+
+(c) Compare the estimates on (a) and (b).
