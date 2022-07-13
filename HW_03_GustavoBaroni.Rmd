@@ -1,0 +1,179 @@
+---
+title: "Causal Inference - Problem Set 3"
+author: "Gustavo Baroni"
+date: "9/5/2020"
+output:   
+  pdf_document:
+    latex_engine: xelatex
+---
+## Question 1 
+
+  Explain how we can make use of stratification to solve the causal inference problem.
+
+  We can make use of stratification to solve the causal inference problem because doing so enables one to concatenate individuals with common characteristics in subgroups. Therefore, stratification can be used by any researcher to make comparisons between well defined groups.
+  
+## Question 2 
+
+  Consider the assumption: $D_i ⊥ (Y_i(1), Y_i(0)) | X_i$^[Unfortunately, I could not do independent symbol with a *[Latex command](https://tex.stackexchange.com/questions/79434/double-perpendicular-symbol-for-independence)*.]. Interpret the assumption. Is this often true in most empirical applications (give examples)? Is it testable?
+  
+  The assumption above means that the outputs for $Y_i(1)$ and $Y_i(0)$ are given no matter whether $i$ was treated.
+In other words, the realizations are independents of the treatment or control effect. 
+  Donald Rubin developed the *[Stable Unit-Treatment-Value Assumption (SUTVA)](http://www.stat.columbia.edu/~cook/qr33.pdf)* in which the assumption made in this exercise is present. He presented an example about the aspirin treatment effect in headaches. Rubin argue that, if two people are in the same experiment together, chances are that someone (in the control group, for example) complain about the headache to the partner (in the treatment group). That way, the one in the treatment group could still have some headache due to the complain. Hence, the treatment for one individual would effect the another output. It is important to affirm that, despite of Rubin had cooked the data and just calculated the difference in means for each group, the assumption behind the SUTVA is crucial to get a more accurate treatment effect from a experiment.
+  
+## Question 3 
+
+  After constructing stratas, we can make use of blocking estimators to estimate average treatment effects. Present the simple blocking estimator.
+
+  A simple blocking estimator is the one for control sexes. In a experiment, a researcher could use the biological condition of being *male* and *female* as a blocking estimator in order to reduce the variance and the variability. Doing so, the researcher would lead the experiment to grater precision.
+  
+## Question 4 
+
+  Explain the differences between OLS and the matching estimands.
+
+  As *pointed out [Jorn-Steffen Pischke](http://econ.lse.ac.uk/staff/spischke/ec533/regression%20vs%20matching.pdf)*, the main difference between Regression and Matching is the weight they use to combine the covariate specific treatment effects. Matching technique uses $P(D_i=1|X_i=x)$ and is better used where there are many treated observations. Regression, on the other hand, uses $P(D_i=1|X_i=x)(1-P(D_i=1|X_i=x))$ and is better used where there are half treated and half untreated observations because the calls will produce the lowest variance.
+
+## Question 5 
+
+  This exercise aim to assess the impact of a training program (National Supported Work Demonstration, NSW from now on) on earnings. NSW was a temporary employment program designed to help disadvantage workers lacking basic job skills move into labor market by giving them work experience and counseling in a sheltered environment.
+  
+  The program was run as a field experiment, where participants were randomly assigned to
+treatment and control groups. The random assignment was explored by Lalonde (1986)^[LaLonde, R. J. (1986). Evaluating the econometric evaluations of training programs with experimental data. The American Economic Review, 604-620.], in order to estimate its causal effect on wages.
+  
+  To discuss causal inference and sample selection bias in nonexperimental settings, Dehejia and Wahba (1999, 2002)^[Dehejia, R. H., Wahba, S. (1999). Causal effects in nonexperimental studies: Reevaluating the evaluation of training programs. Journal of the American statistical Association, 94(448), 1053-1062. Dehejia, R. H., Wahba, S. (2002). Propensity score-matching methods for nonexperimental causal studies. Review of Economics and statistics, 84(1), 151-161.] combine the treated units from a radomized evaluation of the NSW with nonexperimental comparison units drawn from survey datasets (CPS and PSID) to form a composite dataset. Dehejia and Wahba (1999, 2002) thus compare the estimates of the treatment effect obtained using propensity score matching on the composite dataset to the benchmark results from the field experiment.
+
+  Using the experimental dataset nsw.dta, compute the following:
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(haven)
+nsw <- read_dta("~/Gustavo/Econometria/HW3/nsw.dta")
+```
+
+  (a) Proceed a balance check on pre-treatment variables (i.e. for each pre-treatment variable, compute its mean and standard error for treatment and control groups and test if the difference in means between groups is statistically significant).
+
+  Proceeding the *[balance checks](https://cran.r-project.org/web/packages/Matching/Matching.pdf)*:
+```{r message=FALSE, warning=FALSE}
+library(Matching)
+library(dplyr)
+
+treat <- filter (nsw, treat == 1)
+no_treat <- filter (nsw, treat == 0)
+
+## Testing the balance for age
+age <- balanceUV(treat$age, no_treat$age)
+summary(age)     
+
+## Testing the balance for education
+educ <- balanceUV(treat$educ, no_treat$educ)
+summary(educ)    
+
+## Testing the balance for phenotype
+black <- balanceUV(treat$black, no_treat$black)
+summary(black)   
+
+## Testing the balance for ethinicity
+hisp <- balanceUV(treat$hisp, no_treat$hisp)
+summary(hisp)    
+
+## Testing the balance for marital status
+married <- balanceUV(treat$married, no_treat$married)
+summary(married) 
+
+## Testing the balance for earnings in 1974
+re74 <- balanceUV(treat$re74, no_treat$re74)
+summary(re74)    
+
+## Testing the balance for earnings in 1975
+re75 <- balanceUV(treat$re75, no_treat$re75)
+summary(re75)    
+
+## Testing the balance for unemployment status in 1974
+u74 <- balanceUV(treat$u74, no_treat$u74)
+summary(u74)     
+
+## Testing the balance for unemployment status in 1975
+u75 <- balanceUV(treat$u75, no_treat$u75)
+summary(u75)     
+```
+  
+  As we can see, there is almost twice more black people in the control group than in the treatment. Also, Married people are a bit more present in the control group. Besides that, the treatment was fair enough balanced.
+  
+  (b) Estimate the average treatment effect of the training program (without covariates). Is it statistically different from zero? Interpret the results.
+
+```{r message=FALSE, warning=FALSE}
+ate_b <- lm(re78 ~ treat, data = nsw)
+summary(ate_b)
+```
+
+  As we can see, the treatment has an impact on the wage. Someone without the treatment would have, on average, `r round(ate_b$coefficients[1], 2)` and someone after the treatment would have, on average, `r round(ate_b$coefficients[2]+ ate_b$coefficients[1], 2)`.
+
+  (c) Estimate the average treatment effect of the training program, including pre-treatment covariates as control variables. Did the results change?
+  
+```{r message=FALSE, warning=FALSE}
+ate_c <- lm(re78 ~ treat + age + educ + black + hisp + married + re74 + re75 + u74 + u75, data = nsw)
+summary(ate_c)
+```  
+  
+  The new results show that the treatment is still statistically significant (education also). Besides that, the covariates are not that significant (e.g., if we consider a married person (by almost 90% of interval), he/she would have the money he/she make dropped).
+  
+  Now using the composite dataset psid.dta, compute the following:
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(haven)
+psid <- read_dta("~/Gustavo/Econometria/HW3/psid.dta")
+```
+  (d) Proceed a balance check on pre-treatment variables and discuss the results.
+
+```{r message=FALSE, warning=FALSE}
+treat <- filter(psid, treat == 1)
+no_treat <- filter(psid, treat == 0)
+
+## Testing the balance for age
+age <- balanceUV(treat$age, no_treat$age)
+summary(age)     
+
+## Testing the balance for education
+educ <- balanceUV(treat$educ, no_treat$educ)
+summary(educ)    
+
+## Testing the balance for phenotype
+black <- balanceUV(treat$black, no_treat$black)
+summary(black)   
+
+## Testing the balance for ethinicity
+hisp <- balanceUV(treat$hisp, no_treat$hisp)
+summary(hisp)    
+
+## Testing the balance for marital status
+married <- balanceUV(treat$married, no_treat$married)
+summary(married) 
+
+## Testing the balance for earnings in 1974
+re74 <- balanceUV(treat$re74, no_treat$re74)
+summary(re74)    
+
+## Testing the balance for earnings in 1975
+re75 <- balanceUV(treat$re75, no_treat$re75)
+summary(re75)    
+
+## Testing the balance for unemployment status in 1974
+u74 <- balanceUV(treat$u74, no_treat$u74)
+summary(u74)     
+
+## Testing the balance for unemployment status in 1975
+u75 <- balanceUV(treat$u75, no_treat$u75)
+summary(u75)     
+```
+
+  As we can see, there is a poor balance in the treatment.
+
+  (e) Test whether the average post-treatment earnings difference between treated and control individuals is statistically different from zero. By doing this, are you assessing the average treatment effect? Why?
+  
+  Testing:
+```{r message=FALSE, warning=FALSE}
+test <- lm(re78 ~ treat, data = psid)
+summary(test)
+```
+  
+  As we can see, the treatment is statistically significant in the regression, but we can not assess the real average treatment effect due to the the poor balance.
+  
+  (f) How these results compare to the treatment effect obtained from the experimental data?
+  
+  By doing a passable balance, the experimental data shows a positive impact on the average wage. On the other hand, former results show a negative one. Besides the selection bias in the treatment, all the explanations for why the treatment seems to be prejudicial are just conjectures.
